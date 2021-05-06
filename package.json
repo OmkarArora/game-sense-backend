@@ -1,0 +1,25 @@
+{
+  "name": "game-sense-backend",
+  "version": "1.0.0",
+  "description": "Game Sense store backend",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index.js"
+  },
+  "author": "Omkar Arora",
+  "license": "ISC",
+  "engines": {
+    "node": "v13.12.0"
+  },
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "dotenv": "^9.0.0",
+    "express": "^4.17.1",
+    "lodash": "^4.17.21",
+    "mongoose": "^5.12.7",
+    "mongoose-type-url": "^2.1.0",
+    "nodemon": "^2.0.7"
+  }
+}
