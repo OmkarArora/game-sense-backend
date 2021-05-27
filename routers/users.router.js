@@ -1,3 +1,5 @@
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const express = require("express");
 const router = express.Router();
 const { extend } = require("lodash");
@@ -28,9 +30,28 @@ router.route("/")
   .post(async (req, res) => {
     try {
       const user = req.body;
+      if (!(user.email && user.password && user.name)) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Data not formatted properly" });
+      }
       const NewUser = new User(user);
+      const salt = await bcrypt.genSalt(10);
+      NewUser.password = await bcrypt.hash(NewUser.password, salt);
       const savedUser = await NewUser.save();
-      res.json({ success: true, user: savedUser });
+      const token = jwt.sign(
+        { userId: user._id, email: user.email },
+        process.env.JWT_SECRET
+      );
+      res.json({
+        success: true,
+        user: {
+          id: savedUser._id,
+          email: savedUser.email,
+          role: savedUser.role,
+        },
+        token,
+      });
     }
     catch (error) {
       res.status(500).json({ success: false, message: "Unable to register user", errorMessage: error.message });

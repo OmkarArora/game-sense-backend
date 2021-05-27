@@ -11,6 +11,7 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: "Email address is required",
       unique: true,
+      index: true,
       validate: [(email) => {
         let re = new RegExp(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/);
         return re.test(email);

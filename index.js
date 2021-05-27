@@ -1,6 +1,8 @@
-require('dotenv').config();
+require("dotenv").config();
 
-const express = require('express');
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const { requestInfo, errorHandler } = require("./middleware/middleware");
@@ -29,30 +31,50 @@ app.use("/home", homeRouter);
 const usersRouter = require("./routers/users.router");
 app.use("/users", usersRouter);
 
-app.get('/', (request, response) => {
+app.get("/", (request, response) => {
   // throw new Error("Purposeful Error on '/' route");
-  response.send('Hello World!')
+  response.send("Connected to Game Sense server");
 });
 
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
-  console.log(req.body);
   try {
     const user = await User.findOne({ email });
     if (!user) {
-      return res.json({ success: false, message: "Email not found", errorMessage: "email not found" })
+      return res.json({
+        success: false,
+        message: "Email not found",
+        errorMessage: "Email not found",
+      });
     }
-  if (user.password === password) {
-      res.json({ success: true, message: "Login success", user: { id: user._id, name: user.name, email: user.email, role: user.role} })
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (validPassword) {
+      const token = jwt.sign(
+        { userId: user._id, email: user.email },
+        process.env.JWT_SECRET
+      );
+      res.json({
+        success: true,
+        message: "Login success",
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+        token,
+      });
+    } else {
+      res.json({ success: false, message: "Invalid password" });
     }
-    else {
-      res.json({ success: false, message: "Incorrect password" })
-    }
+  } catch (error) {
+    res.json({
+      success: false,
+      message: "User not found",
+      errorMessage: error.message,
+    });
   }
-  catch (error) {
-    res.json({ success: false, message: "email not found", errorMessage: error.message })
-  }
-})
+});
 
 // catching errors
 app.use(errorHandler);
@@ -61,10 +83,15 @@ app.use(errorHandler);
  * 404 Route errorHandlerNote: Do not move. This should be the last route
  */
 app.use((req, res) => {
-  res.status(404).json({ success: false, message: "Route not found on server, please check" })
-})
+  res
+    .status(404)
+    .json({
+      success: false,
+      message: "Route not found on server, please check",
+    });
+});
 
 const PORT = process.env.PORT || 5050;
 app.listen(PORT, () => {
-  console.log('server started on port: ', PORT);
+  console.log("server started on port: ", PORT);
 });
