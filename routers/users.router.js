@@ -3,28 +3,30 @@ const jwt = require("jsonwebtoken");
 const express = require("express");
 const router = express.Router();
 const { extend } = require("lodash");
-const { paramLogger } = require("../middleware/middleware");
-// const { checkAuth } = require("../middleware/middleware");
+const { paramLogger, authVerify } = require("../middleware/middleware");
 const { User } = require("../models/user.model");
-const { Product } = require("../models/product.model");
 
 let userCartRouter = express.Router({ mergeParams: true });
-router.use("/:userId/cart", userCartRouter);
+router.use("/:userId/cart", authVerify, userCartRouter);
 
 let userWishlistRouter = express.Router({ mergeParams: true });
-router.use("/:userId/wishlist", userWishlistRouter);
+router.use("/:userId/wishlist", authVerify, userWishlistRouter);
 
 router.use("/:userId", paramLogger);
 // router.use("/:id", checkAuth);
 
-router.route("/")
+router
+  .route("/")
   .get(async (req, res) => {
     try {
       const users = await User.find({});
       res.json({ success: true, users });
-    }
-    catch (error) {
-      res.status(500).json({ success: false, message: "Unable to get users", errorMessage: error.message });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: "Unable to get users",
+        errorMessage: error.message,
+      });
     }
   })
   .post(async (req, res) => {
@@ -52,28 +54,34 @@ router.route("/")
         },
         token,
       });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: "Unable to register user",
+        errorMessage: error.message,
+      });
     }
-    catch (error) {
-      res.status(500).json({ success: false, message: "Unable to register user", errorMessage: error.message });
-    }
-  })
+  });
 
 router.param("userId", async (req, res, next, userId) => {
   try {
     const user = await User.findById(userId);
-    console.log("User ID: ", userId);
     if (!user) {
-      return res.status(400).json({ success: false, message: "Error getting user" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Error getting user" });
     }
-
     req.user = user;
     next();
   } catch (error) {
-    return res.status(400).json({ success: false, message: "Error while retreiving the user" });
+    return res
+      .status(400)
+      .json({ success: false, message: "Error while retreiving the user" });
   }
-})
+});
 
-router.route("/:userId")
+router
+  .route("/:userId")
   .get(async (req, res) => {
     console.log("Params Checked", req.paramsChecked);
     const { user } = req;
@@ -91,32 +99,54 @@ router.route("/:userId")
   .delete(async (req, res) => {
     let { user } = req;
     user = await user.remove();
-    res.json({ success: true, message: "User deleted successfully", user, deleted: true });
-  })
-
-userCartRouter.route("/")
-  .get((req, res) => {
-    const { userId } = req.params;
-    User.findById(userId).populate("cart.product").exec((error, user) => {
-      if (error) {
-        console.error(error);
-        return res.status(500).json({ success: false, message: "Error while retreiving cart", errorMessage: error.message });
-      }
-      return res.json({ success: true, cart: user.cart })
+    res.json({
+      success: true,
+      message: "User deleted successfully",
+      user,
+      deleted: true,
     });
   });
 
-userWishlistRouter.route("/")
-  .get((req, res) => {
-    const { userId } = req.params;
-    User.findById(userId).populate("wishlist").exec((error, user) => {
+userCartRouter.route("/").get((req, res) => {
+  const { userId } = req.params;
+  User.findById(userId)
+    .populate("cart.product")
+    .exec((error, user) => {
       if (error) {
         console.error(error);
-        return res.status(500).json({ success: false, message: "Error while retreiving wishlist", errorMessage: error.message });
+        return res.status(500).json({
+          success: false,
+          message: "Error while retreiving cart",
+          errorMessage: error.message,
+        });
       }
-      return res.json({ success: true, wishlist: user.wishlist })
+      return res.json({ success: true, cart: user.cart });
     });
-  });
+});
 
+// userCartRouter.route("/add").post((req, res) => {
+//   let { user } = req;
+//   const { cartItem } = req.body;
+//   user.cart.push(cartItem);
+//   await user.save();
+//   return res.json({ success: true, cartItem });
+// });
+
+userWishlistRouter.route("/").get((req, res) => {
+  const { userId } = req.params;
+  User.findById(userId)
+    .populate("wishlist")
+    .exec((error, user) => {
+      if (error) {
+        console.error(error);
+        return res.status(500).json({
+          success: false,
+          message: "Error while retreiving wishlist",
+          errorMessage: error.message,
+        });
+      }
+      return res.json({ success: true, wishlist: user.wishlist });
+    });
+});
 
 module.exports = router;
