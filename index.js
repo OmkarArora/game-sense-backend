@@ -1,4 +1,5 @@
 require("dotenv").config();
+const path = require("path");
 
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
@@ -31,9 +32,16 @@ app.use("/home", homeRouter);
 const usersRouter = require("./routers/users.router");
 app.use("/users", usersRouter);
 
+const paymentsRouter = require("./routers/payments.router");
+app.use("/payments", paymentsRouter);
+
 app.get("/", (request, response) => {
   // throw new Error("Purposeful Error on '/' route");
   response.send("Connected to Game Sense server");
+});
+
+app.get("/logo.png", (req, res) => {
+  res.sendFile(path.join(__dirname, "logo.png"));
 });
 
 app.post("/login", async (req, res) => {

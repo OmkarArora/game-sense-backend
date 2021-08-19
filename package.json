@@ -22,6 +22,8 @@
     "lodash": "^4.17.21",
     "mongoose": "^5.12.7",
     "mongoose-type-url": "^2.1.0",
-    "nodemon": "^2.0.7"
+    "nodemon": "^2.0.7",
+    "razorpay": "^2.0.6",
+    "shortid": "^2.2.16"
   }
 }

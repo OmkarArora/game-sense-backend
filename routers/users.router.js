@@ -12,6 +12,9 @@ router.use("/:userId/cart", authVerify, userCartRouter);
 let userWishlistRouter = express.Router({ mergeParams: true });
 router.use("/:userId/wishlist", authVerify, userWishlistRouter);
 
+let userOrdersRouter = express.Router({ mergeParams: true });
+router.use("/:userId/orders", authVerify, userOrdersRouter);
+
 router.use("/:userId", paramLogger);
 // router.use("/:id", checkAuth);
 
@@ -148,5 +151,41 @@ userWishlistRouter.route("/").get((req, res) => {
       return res.json({ success: true, wishlist: user.wishlist });
     });
 });
+
+userOrdersRouter
+  .route("/")
+  .get((req, res) => {
+    const { userId } = req.params;
+    User.findById(userId)
+      .populate("orders.products.productId")
+      .exec((error, user) => {
+        if (error) {
+          console.error(error);
+          return res.status(500).json({
+            success: false,
+            message: "Error while retreiving orders",
+            errorMessage: error.message,
+          });
+        }
+        return res.json({ success: true, orders: user.orders });
+      });
+  })
+  .post(async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const { products, orderId, paymentId, amount, gateway } = req.body;
+      const user = await User.findById(userId);
+      const order = { products, orderId, paymentId, amount, gateway };
+      user.orders = [order, ...user.orders];
+      await user.save();
+      return res.json({success: true, orders: user.orders});
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: "Error while saving orders",
+        errorMessage: error.message
+      })
+    }
+  });
 
 module.exports = router;
