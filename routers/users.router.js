@@ -174,11 +174,24 @@ userOrdersRouter
     try {
       const { userId } = req.params;
       const { products, orderId, paymentId, amount, gateway } = req.body;
-      const user = await User.findById(userId);
-      const order = { products, orderId, paymentId, amount, gateway };
+      let user = await User.findById(userId);
+      const order = { products, orderId, paymentId, amount, gateway, fulfilmentDate: new Date() };
       user.orders = [order, ...user.orders];
-      await user.save();
-      return res.json({success: true, orders: user.orders});
+      user.cart = [];
+      user = await user.save();
+      User.findById(userId)
+      .populate("orders.products.productId")
+      .exec((error, user) => {
+        if (error) {
+          console.error(error);
+          return res.status(500).json({
+            success: false,
+            message: "Error while retreiving orders",
+            errorMessage: error.message,
+          });
+        }
+        return res.json({ success: true, orders: user.orders });
+      });
     } catch (error) {
       res.status(500).json({
         success: false,

@@ -77,6 +77,10 @@ const UserSchema = new mongoose.Schema(
         gateway: {
           type: String,
           default: "razorpay"
+        },
+        fulfilmentDate: {
+          type: Date,
+          required: true
         }
       },
     ],
