@@ -2,12 +2,15 @@ const express = require("express");
 const router = express.Router();
 const shortid = require("shortid");
 const { Product } = require("../models/product.model");
-
 const Razorpay = require("razorpay");
+const { authVerify } = require("../middleware/middleware");
+
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
+
+router.use(authVerify);
 
 router.route("/razorpay").post(async (req, res) => {
   try {

@@ -22,7 +22,7 @@ const authVerify = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.userAuth = { userId: decoded.userId, email: decoded.email };
-    if (decoded.userId !== String(req.user._id)) {
+    if (req.user && decoded.userId !== String(req.user._id)) {
       return res.status(401).json({
         success: false,
         message: "User authentication failed",
@@ -30,6 +30,7 @@ const authVerify = (req, res, next) => {
     }
     return next();
   } catch (error) {
+    console.log(error);
     return res.status(401).json({
       success: false,
       message: "Unauthorised access, put valid token",
